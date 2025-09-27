@@ -78,13 +78,13 @@ docker compose exec app bash -lc "python scheduler/schedule_daily.py"
 - Normalizes and stores each book in MongoDB (`books`), including:
   - Numeric price fields
   - Gzipped HTML snapshot (`raw_html_gz`)
-- Idempotent upserts by URL; recommended indexes for fast API queries.
+- Idempotent upserts by URL.
 
 ### 🔄 Change Detection
 - Per-page **`content_hash`** (stable fingerprint).
 - Detailed entry in `changes` for **new** and **update** events.
 - Field-level diffs (`fields_changed`), `price_delta`, and a `significant` flag.
-- Daily JSON/CSV reports + optional email alerts.
+- Daily JSON/CSV reports + email alerts.
 
 ### ⏰ Scheduler
 - APScheduler daily run (timezone from `.env`).
@@ -134,16 +134,109 @@ X-API-Key: <QTS_API_KEY>
 
 ---
 
-## 🗄️ Data Model
+# 📂 MongoDB Document Structure
 
-### `books`
-- Full book info (url, name, description, category, image_url, rating, availability, price_incl_tax[_num], price_excl_tax[_num], tax, num_reviews, crawled_at, source).
-- HTML snapshot (`raw_html_gz`).
-- Stable `content_hash`.
+The application uses two primary collections: **`books`** and **`changes`**.
 
-### `changes`
-- Captures diffs between crawls.
-- url, changed_at, change_kind, significant, fields_changed, price_delta, prev_hash, new_hash flag.
+---
+
+## 📝 `books` Collection
+
+Stores the latest snapshot of each crawled book.
+
+**Sample document:**
+
+```json
+{
+  "_id": { "$oid": "6512bd43d9caa6e02c990b0a" },
+  "url": "https://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html",
+  "name": "A Light in the Attic",
+  "description": "A collection of humorous poems and drawings.",
+  "category": "Poetry",
+  "image_url": "https://books.toscrape.com/media/cache/fe/9a/fe9a...jpg",
+  "rating": 4,
+  "availability": "In stock (22 available)",
+  "price_incl_tax": "£51.77",
+  "price_excl_tax": "£48.77",
+  "price_incl_tax_num": 51.77,
+  "price_excl_tax_num": 48.77,
+  "tax": "£3.00",
+  "num_reviews": 0,
+  "crawled_at": { "$date": "2025-09-27T14:23:16.725Z" },
+  "source": "books.toscrape.com",
+  "content_hash": "sha256:6d6b8b5f9c8f...b7",
+  "raw_html_gz": { "$binary": "H4sIAAAAAAAA/4xYXW...", "$type": "00" }
+}
+```
+
+**Field reference:**
+
+- `url` *(string, unique)* — canonical product URL  
+- `name` *(string)*  
+- `description` *(string)*  
+- `category` *(string)*  
+- `image_url` *(string)*  
+- `rating` *(int, 0–5)*  
+- `availability` *(string)*  
+- `price_incl_tax`, `price_excl_tax`, `tax` *(string as scraped, e.g. "£51.77")*  
+- `price_incl_tax_num`, `price_excl_tax_num` *(number, for sorting/filtering)*  
+- `num_reviews` *(int)*  
+- `crawled_at` *(datetime, UTC)*  
+- `source` *(string, e.g. "books.toscrape.com")*  
+- `content_hash` *(string, sha256 fingerprint of salient content)*  
+- `raw_html_gz` *(binary, gzipped HTML snapshot; optional)*  
+
+---
+
+## 🔄 `changes` Collection
+
+Stores change history between crawls. Each entry records either a **new** book or an **update**.
+
+**Sample documents:**
+
+```json
+{
+  "_id": { "$oid": "6512bd43d9caa6e02c990b0b" },
+  "url": "https://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html",
+  "changed_at": { "$date": "2025-09-28T09:05:11.112Z" },
+  "change_kind": "new",
+  "significant": true,
+  "fields_changed": {
+    "price_incl_tax": { "prev": null, "new": "£51.77" },
+    "availability":   { "prev": null, "new": "In stock (22 available)" }
+  },
+  "price_delta": 51.77,
+  "prev_hash": null,
+  "new_hash": "sha256:6d6b8b5f9c8f...b7"
+}
+```
+
+```json
+{
+  "_id": { "$oid": "6512bd43d9caa6e02c990b0c" },
+  "url": "https://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html",
+  "changed_at": { "$date": "2025-10-01T10:14:03.004Z" },
+  "change_kind": "update",
+  "significant": true,
+  "fields_changed": {
+    "price_incl_tax": { "prev": "£51.77", "new": "£49.99" },
+    "availability":   { "prev": "In stock (22 available)", "new": "In stock (5 available)" }
+  },
+  "price_delta": -1.78,
+  "prev_hash": "sha256:6d6b8b5f9c8f...b7",
+  "new_hash":  "sha256:9f3e2a1c0d4e...21"
+}
+```
+
+**Field reference:**
+
+- `url` *(string)* — FK to `books.url`  
+- `changed_at` *(datetime, UTC)*  
+- `change_kind` *(enum: `"new"` | `"update"`)*  
+- `significant` *(bool)*  
+- `fields_changed` *(object: `{ field: { prev, new } }`)*  
+- `price_delta` *(number; 0 for non-price updates)*  
+- `prev_hash`, `new_hash` *(strings; content fingerprints)*  
 
 ---
 
