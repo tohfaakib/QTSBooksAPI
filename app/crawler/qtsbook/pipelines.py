@@ -49,7 +49,7 @@ class MongoPipeline:
             f"{item.get('num_reviews', '')}"
         ).encode("utf-8", "ignore")
         item["content_hash"] = hashlib.sha1(key).hexdigest()
-        item["crawled_at"] = datetime.utcnow()
+        item["crawled_at"] = datetime.now(timezone.utc)
 
         item["price_incl_tax_num"] = parse_price_num(item.get("price_incl_tax"))
         item["price_excl_tax_num"] = parse_price_num(item.get("price_excl_tax"))
@@ -65,7 +65,7 @@ class MongoPipeline:
         if not prev:
             self.changes.insert_one({
                 "url": item["url"],
-                "changed_at": datetime.utcnow(),
+                "changed_at": datetime.now(timezone.utc),
                 "change_kind": "new",
                 "significant": True,
                 "fields_changed": {
@@ -111,7 +111,7 @@ class MongoPipeline:
 
         self.changes.insert_one({
             "url": item["url"],
-            "changed_at": datetime.utcnow(),
+            "changed_at": datetime.now(timezone.utc),
             "change_kind": "update",
             "significant": significant,
             "fields_changed": changed,
