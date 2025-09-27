@@ -53,14 +53,16 @@ A production-ready solution that crawls [**books.toscrape.com**](https://books.t
 
 ### Configure Environment
 Copy and edit:
-\`\`\`bash
+
+```bash
 cp .env.example .env
-\`\`\`
+```
 
 ### Launch the stack
-\`\`\`bash
+
+```bash
 docker compose up -d --build
-\`\`\`
+```
 
 ### Where to go
 - **API/Dashboard** → [http://localhost:8000](http://localhost:8000)
@@ -81,13 +83,14 @@ docker compose up -d --build
 - **View Logs** — live crawler output.
 
 ### CLI (inside container)
-\`\`\`bash
+
+```bash
 # Fresh crawl
 docker compose exec app bash -lc "python scheduler/run_crawl.py"
 
 # Resume crawl
 docker compose exec app bash -lc "QTS_SCRAPY_RESUME=true python scheduler/run_crawl.py"
-\`\`\`
+```
 
 **Fresh vs Resume (important):**
 - Fresh = revisits all pages → required for accurate change detection.
@@ -103,9 +106,10 @@ docker compose exec app bash -lc "QTS_SCRAPY_RESUME=true python scheduler/run_cr
 - Dashboard → **Run Scheduled Job Now** = same flow, on demand.
 
 Manual run:
-\`\`\`bash
+
+```bash
 docker compose exec app bash -lc "python scheduler/schedule_daily.py"
-\`\`\`
+```
 
 ---
 
@@ -113,11 +117,13 @@ docker compose exec app bash -lc "python scheduler/schedule_daily.py"
 
 ### Authentication & Rate Limiting
 - Every request requires:
-  \`\`\`
-  X-API-Key: <QTS_API_KEY>
-  \`\`\`
+
+```http
+X-API-Key: <QTS_API_KEY>
+```
+
 - Rate limit: **100 req/hour** per (API key, path).
-- Exceeding = `429 Too Many Requests`.
+- Exceeding → `429 Too Many Requests`.
 
 ### Endpoints
 - `GET /books` — query by category, rating, price range, search term.
@@ -140,11 +146,12 @@ docker compose exec app bash -lc "python scheduler/schedule_daily.py"
 - `fields_changed`, `price_delta`, `significant` flag.
 
 Indexes:
-\`\`\`js
+
+```js
 db.books.createIndex({ url: 1 }, { unique: true });
 db.books.createIndex({ name: "text" });
 db.changes.createIndex({ changed_at: -1 });
-\`\`\`
+```
 
 ---
 
@@ -160,14 +167,16 @@ db.changes.createIndex({ changed_at: -1 });
 ## 🧪 Tests & Coverage
 
 Run tests + coverage:
-\`\`\`bash
+
+```bash
 docker compose exec app bash -lc "coverage run -m pytest -q && coverage report -m"
-\`\`\`
+```
 
 Generate HTML report:
-\`\`\`bash
+
+```bash
 docker compose exec app bash -lc "coverage html && ls -l htmlcov/index.html"
-\`\`\`
+```
 
 ---
 
@@ -189,4 +198,8 @@ docker compose exec app bash -lc "coverage html && ls -l htmlcov/index.html"
 - **Resume not working**  
   → Check `QTS_SCRAPY_RESUME=true` and `./jobdata/books/` exists.
 
+---
 
+## 📄 License
+
+MIT (or your preferred license)
