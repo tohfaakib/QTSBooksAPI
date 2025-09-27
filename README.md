@@ -4,48 +4,6 @@ A production-ready solution that crawls [**books.toscrape.com**](https://books.t
 
 ---
 
-## ✨ Features
-
-### 🔎 Scraper (Scrapy)
-- Crawls all categories & paginated listings with robust selectors, retries, HTTP cache, and polite throttling.
-- Normalizes and stores each book in MongoDB (`books`), including:
-  - Numeric price fields
-  - Gzipped HTML snapshot (`raw_html_gz`)
-- Idempotent upserts by URL; recommended indexes for fast API queries.
-
-### 🔄 Change Detection
-- Per-page **`content_hash`** (stable fingerprint).
-- Detailed entry in `changes` for **new** and **update** events.
-- Field-level diffs (`fields_changed`), `price_delta`, and a `significant` flag.
-- Daily JSON/CSV reports + optional email alerts.
-
-### ⏰ Scheduler
-- APScheduler daily run (timezone from `.env`).
-- Dashboard button: **“Run Scheduled Job Now”**.
-
-### ⚡ API (FastAPI)
-- `GET /books` — filter, sort, paginate books.
-- `GET /books/{id}` — full book details.
-- `GET /changes` — filter by type, significance, URL, time windows.
-- API-key auth and per-key, per-path rate limiting.
-- Interactive **Swagger UI** with API key security scheme.
-
-### 🖥️ Dashboard
-- Start **fresh** crawl.
-- Start **resume-if-possible** crawl (Scrapy JOBDIR).
-- Stop crawl, view live logs.
-- Quick links: Swagger, Docs, Mongo-Express.
-
-### 🐳 Dockerized
-- App + MongoDB (+ optional Mongo-Express).
-- Persistent volumes for data and reports.
-
-### ✅ Tests
-- Pytest suite for endpoints, rate limiting, and reports.
-- Coverage reporting.
-
----
-
 ## 🚀 Setup
 
 ### Prerequisites
@@ -113,6 +71,48 @@ docker compose exec app bash -lc "python scheduler/schedule_daily.py"
 
 ---
 
+## ✨ Features
+
+### 🔎 Scraper (Scrapy)
+- Crawls all categories & paginated listings with robust selectors, retries, HTTP cache, and polite throttling.
+- Normalizes and stores each book in MongoDB (`books`), including:
+  - Numeric price fields
+  - Gzipped HTML snapshot (`raw_html_gz`)
+- Idempotent upserts by URL; recommended indexes for fast API queries.
+
+### 🔄 Change Detection
+- Per-page **`content_hash`** (stable fingerprint).
+- Detailed entry in `changes` for **new** and **update** events.
+- Field-level diffs (`fields_changed`), `price_delta`, and a `significant` flag.
+- Daily JSON/CSV reports + optional email alerts.
+
+### ⏰ Scheduler
+- APScheduler daily run (timezone from `.env`).
+- Dashboard button: **“Run Scheduled Job Now”**.
+
+### ⚡ API (FastAPI)
+- `GET /books` — filter, sort, paginate books.
+- `GET /books/{id}` — full book details.
+- `GET /changes` — filter by type, significance, URL, time windows.
+- API-key auth and per-key, per-path rate limiting.
+- Interactive **Swagger UI** with API key security scheme.
+
+### 🖥️ Dashboard
+- Start **fresh** crawl.
+- Start **resume-if-possible** crawl (Scrapy JOBDIR).
+- Stop crawl, view live logs.
+- Quick links: Swagger, Docs, Mongo-Express.
+
+### 🐳 Dockerized
+- App + MongoDB (+ optional Mongo-Express).
+- Persistent volumes for data and reports.
+
+### ✅ Tests
+- Pytest suite for endpoints, rate limiting, and reports.
+- Coverage reporting.
+
+---
+
 ## 🔑 API
 
 ### Authentication & Rate Limiting
@@ -137,21 +137,13 @@ X-API-Key: <QTS_API_KEY>
 ## 🗄️ Data Model
 
 ### `books`
-- Full book info (title, category, prices, rating, reviews).
+- Full book info (url, name, description, category, image_url, rating, availability, price_incl_tax[_num], price_excl_tax[_num], tax, num_reviews, crawled_at, source).
 - HTML snapshot (`raw_html_gz`).
 - Stable `content_hash`.
 
 ### `changes`
 - Captures diffs between crawls.
-- `fields_changed`, `price_delta`, `significant` flag.
-
-Indexes:
-
-```js
-db.books.createIndex({ url: 1 }, { unique: true });
-db.books.createIndex({ name: "text" });
-db.changes.createIndex({ changed_at: -1 });
-```
+- url, changed_at, change_kind, significant, fields_changed, price_delta, prev_hash, new_hash flag.
 
 ---
 
@@ -198,8 +190,3 @@ docker compose exec app bash -lc "coverage html && ls -l htmlcov/index.html"
 - **Resume not working**  
   → Check `QTS_SCRAPY_RESUME=true` and `./jobdata/books/` exists.
 
----
-
-## 📄 License
-
-MIT (or your preferred license)

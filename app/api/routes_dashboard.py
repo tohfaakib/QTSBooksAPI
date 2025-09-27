@@ -89,7 +89,7 @@ def _spawn_crawl(env_overrides: dict[str, str]) -> None:
     env.update(env_overrides)
 
     _CRAWL_PROC = subprocess.Popen(
-        ["python", "-m", "scripts.run_crawl"],
+        ["python", "-m", "scheduler.run_crawl"],
         cwd=os.path.join(os.getcwd()),
         env=env,
         stdout=subprocess.PIPE,
@@ -139,7 +139,7 @@ async def crawl_stop(_user: str = Depends(_auth)):
 async def schedule_run_now(_user: str = Depends(_auth)):
     async def _run():
         import importlib.util, sys
-        mod_path = os.path.join(os.getcwd(), "scripts", "schedule_daily.py")
+        mod_path = os.path.join(os.getcwd(), "scheduler", "schedule_daily.py")
         spec = importlib.util.spec_from_file_location("schedule_daily", mod_path)
         mod = importlib.util.module_from_spec(spec)  # type: ignore
         sys.modules["schedule_daily"] = mod
