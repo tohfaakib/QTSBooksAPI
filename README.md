@@ -35,7 +35,7 @@ docker compose up -d --build
 ## 🕷️ Crawling
 
 ### Dashboard controls
-- **Start Crawl (Fresh)** — full crawl (recommended for daily runs).
+- **Start Crawl (Fresh)** — full crawl (for daily runs).
 - **Start Crawl (Resume if possible)** — resume interrupted crawl (Scrapy JOBDIR).
 - **Stop Crawl** — terminate current crawl.
 - **View Logs** — live crawler output.
