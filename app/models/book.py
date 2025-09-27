@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, HttpUrl
-from typing import Optional
+from typing import Optional, Literal, Dict, Any
 from datetime import datetime
 
 class Book(BaseModel):
@@ -31,9 +31,15 @@ class Change(BaseModel):
     id: str = Field(alias="_id")
     url: HttpUrl
     changed_at: datetime
+
+    change_kind: Literal["new", "update"] = "update"
+    significant: bool = False
+    fields_changed: Dict[str, Dict[str, Any]] = {}
+    price_delta: Optional[float] = None
+
     prev_hash: Optional[str] = None
     new_hash: str
-    fields_hint: list[str] = []
+
     class Config:
         populate_by_name = True
         from_attributes = True
