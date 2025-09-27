@@ -1,12 +1,20 @@
-from fastapi import APIRouter, Query, Depends
-from typing import Optional, Literal
-from datetime import datetime, timezone, timedelta
+from __future__ import annotations
 
+import math
+from datetime import datetime, timedelta, timezone
+from typing import Optional, Literal
+
+from fastapi import APIRouter, Query, Depends
 from app.db.mongo import get_db
 from app.models.book import Change
 from app.api.deps import require_api_key
+from app.api.limit import rate_limit
 
-router = APIRouter(prefix="/changes", tags=["changes"], dependencies=[Depends(require_api_key)])
+router = APIRouter(
+    prefix="/changes",
+    tags=["changes"],
+    dependencies=[Depends(require_api_key), Depends(rate_limit)],
+)
 
 @router.get(
     "",
@@ -14,7 +22,7 @@ router = APIRouter(prefix="/changes", tags=["changes"], dependencies=[Depends(re
     description=(
         "View recent updates (new items and field changes). "
         "Filter by kind (new/update), significance, time window, or URL. "
-        "Returns pagination metadata."
+        "Pagination is page-based (page/page_size)."
     ),
 )
 async def list_changes(
@@ -24,12 +32,11 @@ async def list_changes(
     since_hours: Optional[int] = Query(None, ge=1, description="If set, uses now-<hours> as start"),
     since: Optional[datetime] = Query(None, description="ISO datetime start (UTC)"),
     until: Optional[datetime] = Query(None, description="ISO datetime end (UTC, default now)"),
-    skip: int = Query(0, ge=0),
-    limit: int = Query(20, ge=1, le=100),
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(20, ge=1, le=100, description="Items per page"),
 ):
     db = get_db()
 
-    # --- build time window (UTC-aware) ---
     now = datetime.now(timezone.utc)
     if since_hours is not None:
         since_dt = now - timedelta(hours=since_hours)
@@ -56,7 +63,11 @@ async def list_changes(
         q["url"] = url
 
     total = await db["changes"].count_documents(q)
-    cursor = db["changes"].find(q).sort("changed_at", -1).skip(skip).limit(limit)
+    total_pages = math.ceil(total / page_size) if total else 0
+    page = max(1, min(page, max(total_pages, 1)))
+    skip = (page - 1) * page_size
+
+    cursor = db["changes"].find(q).sort("changed_at", -1).skip(skip).limit(page_size)
     docs = [doc async for doc in cursor]
     for d in docs:
         d["_id"] = str(d["_id"])
@@ -64,7 +75,12 @@ async def list_changes(
 
     return {
         "total": total,
-        "skip": skip,
-        "limit": limit,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": total_pages,
+        "has_prev": page > 1,
+        "has_next": page < total_pages,
+        "prev_page": page - 1 if page > 1 else None,
+        "next_page": page + 1 if page < total_pages else None,
         "items": items,
     }

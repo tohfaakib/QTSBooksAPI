@@ -3,8 +3,13 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse
 from app.api.deps import require_api_key
+from app.api.limit import rate_limit
 
-router = APIRouter(prefix="/reports", tags=["reports"], dependencies=[Depends(require_api_key)])
+router = APIRouter(
+    prefix="/reports",
+    tags=["reports"],
+    dependencies=[Depends(require_api_key), Depends(rate_limit)],
+)
 
 REPORT_DIR = "reports"
 

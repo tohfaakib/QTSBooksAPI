@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>QTS Logs</title>
+  <meta http-equiv="refresh" content="2"> <!-- auto-refresh every 2s -->
+  <style>
+    body { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; margin: 16px; }
+    pre  { background: #0b1020; color: #e5e7eb; padding: 16px; border-radius: 8px; overflow: auto; max-height: 80vh; }
+    a { color: #60a5fa; text-decoration: none; margin-right: 12px; }
+    .row { display:flex; gap:12px; align-items:center; }
+    button { padding: 8px 12px; border:0; border-radius:8px; background:#dc2626; color:#fff; cursor:pointer; }
+  </style>
+</head>
+<body>
+  <div class="row">
+    <a href="/dashboard">← Back</a>
+    <a href="/dashboard/logs.txt" target="_blank">Open as text</a>
+    <form method="post" action="/dashboard/crawl/stop"><button>Stop Crawl</button></form>
+  </div>
+  <h2>Live Crawl Logs</h2>
+  <pre>{{ logs }}</pre>
+</body>
+</html>

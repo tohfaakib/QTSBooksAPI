@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>QTS Docs</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin: 24px; max-width: 900px; }
+    h1, h2, h3 { margin-top: 1.2em; }
+    code, pre { background: #f7f7f7; padding: 2px 4px; border-radius: 4px; }
+    .muted { color: #6b7280; }
+  </style>
+</head>
+<body>
+  <h1>QTS — Features & API</h1>
+
+  <p class="muted">Quick links:
+    <a href="/">Health</a> ·
+    <a href="/docs" target="_blank">Swagger</a> ·
+    <a href="{{ mongo_ui }}" target="_blank">Mongo UI</a> ·
+    <a href="/dashboard" >Dashboard</a>
+  </p>
+
+  <h2>Overview</h2>
+  <ul>
+    <li><strong>Scrapy</strong> spider saving to MongoDB (<code>books</code>, <code>changes</code>)</li>
+    <li><strong>Change detection</strong>: new vs update, field-level diffs, significant flag, price delta</li>
+    <li><strong>Scheduler</strong>: daily @ 09:00 Asia/Dhaka; writes daily JSON/CSV under <code>./reports/</code></li>
+    <li><strong>Alerts</strong>: optional email on new changes since last notification</li>
+    <li><strong>FastAPI</strong> with API key, rate limit, filters/sorting/pagination</li>
+  </ul>
+
+  <h2>Endpoints</h2>
+  <h3>Books</h3>
+  <pre>GET /books?page=1&amp;page_size=20&amp;category=Travel&amp;min_price=10&amp;max_price=30&amp;min_rating=3&amp;sort_by=price&amp;order=asc</pre>
+  <ul>
+    <li><code>category</code>, <code>q</code> (name substring)</li>
+    <li><code>min_price</code>, <code>max_price</code> (numeric)</li>
+    <li><code>min_rating</code> (0–5)</li>
+    <li><code>sort_by</code>=<code>price|rating|reviews|name|crawled_at</code>, <code>order</code>=<code>asc|desc</code></li>
+    <li>Pagination: <code>page</code>, <code>page_size</code></li>
+  </ul>
+
+  <h3>Changes</h3>
+  <pre>GET /changes?page=1&amp;page_size=20&amp;since_hours=24&amp;significant=true</pre>
+  <ul>
+    <li><code>kind</code>=<code>new|update</code>, <code>significant</code>=<code>true|false</code>, <code>url</code>=exact</li>
+    <li>Time: <code>since_hours</code> or <code>since</code>/<code>until</code> (UTC ISO)</li>
+    <li>Pagination: <code>page</code>, <code>page_size</code></li>
+  </ul>
+
+  <h3>Reports</h3>
+  <pre>GET /reports/list
+GET /reports/today?format=json|csv</pre>
+
+  <h3>Admin (from this Dashboard too)</h3>
+  <pre>POST /dashboard/crawl/start  (start on-demand crawl)
+POST /dashboard/crawl/stop   (stop running crawl)
+POST /dashboard/schedule/run-now  (crawl + report once)</pre>
+
+  <h2>Auth & Rate Limit</h2>
+  <ul>
+    <li>Header: <code>X-API-Key: &lt;your key from .env&gt;</code></li>
+    <li>Rate limit: 100 req/hour per key+path</li>
+  </ul>
+
+  <h2>Data Model (quick)</h2>
+  <p><strong>books</strong>: <code>url, name, description, category, image_url, rating, availability, price_incl_tax[_num], price_excl_tax[_num], tax, num_reviews, crawled_at, source, content_hash, raw_html_gz</code></p>
+  <p><strong>changes</strong>: <code>url, changed_at, change_kind, significant, fields_changed, price_delta, prev_hash, new_hash</code></p>
+
+  <p class="muted">For full schema & try-it-out, see <a href="/docs">Swagger</a>.</p>
+</body>
+</html>
