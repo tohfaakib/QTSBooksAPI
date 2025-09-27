@@ -32,6 +32,8 @@ services:
     env_file: .env
     volumes:
       - ./:/app
+      - ./reports:/app/reports
+      - ./jobdata:/app/.job
     working_dir: /app
     depends_on:
       mongo:
