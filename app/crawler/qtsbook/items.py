@@ -21,4 +21,5 @@ class BookItem(scrapy.Item):
     crawled_at = scrapy.Field()
     source = scrapy.Field()
     raw_html = scrapy.Field()
+    raw_html_gz = scrapy.Field()
     content_hash = scrapy.Field()
