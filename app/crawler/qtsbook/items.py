@@ -16,6 +16,8 @@ class BookItem(scrapy.Item):
     availability = scrapy.Field()
     price_excl_tax = scrapy.Field()
     price_incl_tax = scrapy.Field()
+    price_excl_tax_num = scrapy.Field()
+    price_incl_tax_num = scrapy.Field()
     tax = scrapy.Field()
     num_reviews = scrapy.Field()
     crawled_at = scrapy.Field()

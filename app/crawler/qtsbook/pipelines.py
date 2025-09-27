@@ -8,6 +8,15 @@ import hashlib
 from datetime import datetime, timezone
 from pymongo import MongoClient
 from scrapy.utils.project import get_project_settings
+import re
+
+PRICE_RE = re.compile(r"[\d.]+")
+
+def parse_price_num(s: str | None) -> float | None:
+    if not s:
+        return None
+    m = PRICE_RE.search(s)
+    return float(m.group(0)) if m else None
 
 class MongoPipeline:
     def __init__(self):
@@ -32,6 +41,9 @@ class MongoPipeline:
             self.client.close()
 
     def process_item(self, item, spider):
+        item["price_incl_tax_num"] = parse_price_num(item.get("price_incl_tax"))
+        item["price_excl_tax_num"] = parse_price_num(item.get("price_excl_tax"))
+
         key = (
             f"{item.get('name','')}"
             f"{item.get('price_incl_tax','')}"
@@ -39,6 +51,7 @@ class MongoPipeline:
             f"{item.get('rating','')}"
             f"{item.get('num_reviews','')}"
         ).encode("utf-8", "ignore")
+
         item["content_hash"] = hashlib.sha1(key).hexdigest()
         item["crawled_at"] = datetime.utcnow()
 
