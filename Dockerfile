@@ -17,7 +17,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy source
 COPY app /app/app
-COPY scripts /app/scripts
+COPY scheduler /app/scheduler
 
 # Default command is a no-op; we’ll override with docker compose
 CMD ["bash", "-lc", "echo 'qtsbook image ready' && sleep infinity"]

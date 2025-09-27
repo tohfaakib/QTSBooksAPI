@@ -1,4 +1,3 @@
-# scripts/schedule_daily.py
 import os
 import sys
 import asyncio
@@ -7,11 +6,9 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-# --- ensure repo root is importable (for module runs, logs, etc.) ---
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
-# -------------------------------------------------------------------
 
 TZ = ZoneInfo(os.getenv("QTS_TIMEZONE", "Asia/Dhaka"))
 SCRAPY_ROOT = os.path.join(REPO_ROOT, "app", "crawler")
@@ -45,6 +42,7 @@ def main():
     scheduler = AsyncIOScheduler(timezone=TZ, event_loop=loop)
     # Daily at 09:00 AM
     scheduler.add_job(run_once, "cron", hour=9, minute=0, id="daily_crawl")
+    # scheduler.add_job(run_once, "cron", minute="*/1", id="minutely_test")
 
     print(f"[{datetime.now(TZ).isoformat()}] Scheduler started (daily @ 09:00). Ctrl+C to stop.")
     scheduler.start()

@@ -41,35 +41,83 @@ class MongoPipeline:
             self.client.close()
 
     def process_item(self, item, spider):
-        item["price_incl_tax_num"] = parse_price_num(item.get("price_incl_tax"))
-        item["price_excl_tax_num"] = parse_price_num(item.get("price_excl_tax"))
-
         key = (
-            f"{item.get('name','')}"
-            f"{item.get('price_incl_tax','')}"
-            f"{item.get('availability','')}"
-            f"{item.get('rating','')}"
-            f"{item.get('num_reviews','')}"
+            f"{item.get('name', '')}"
+            f"{item.get('price_incl_tax', '')}"
+            f"{item.get('availability', '')}"
+            f"{item.get('rating', '')}"
+            f"{item.get('num_reviews', '')}"
         ).encode("utf-8", "ignore")
-
         item["content_hash"] = hashlib.sha1(key).hexdigest()
         item["crawled_at"] = datetime.utcnow()
+
+        item["price_incl_tax_num"] = parse_price_num(item.get("price_incl_tax"))
+        item["price_excl_tax_num"] = parse_price_num(item.get("price_excl_tax"))
 
         if "raw_html" in item:
             item["raw_html_gz"] = gzip.compress(item.pop("raw_html"))
 
-        prev = self.books.find_one({"url": item["url"]}, {"content_hash": 1})
+        prev = self.books.find_one({"url": item["url"]})
 
         doc = dict(item)
         self.books.update_one({"url": item["url"]}, {"$set": doc}, upsert=True)
 
-        if prev and prev.get("content_hash") != item["content_hash"]:
+        if not prev:
             self.changes.insert_one({
                 "url": item["url"],
-                "changed_at": datetime.now(timezone.utc),
-                "prev_hash": prev.get("content_hash"),
+                "changed_at": datetime.utcnow(),
+                "change_kind": "new",
+                "significant": True,
+                "fields_changed": {
+                    "name": {"prev": None, "new": item.get("name")},
+                    "category": {"prev": None, "new": item.get("category")},
+                    "price_incl_tax": {"prev": None, "new": item.get("price_incl_tax")},
+                    "availability": {"prev": None, "new": item.get("availability")},
+                    "rating": {"prev": None, "new": item.get("rating")},
+                },
+                "price_delta": None,
+                "prev_hash": None,
                 "new_hash": item["content_hash"],
-                "fields_hint": ["name","price_incl_tax","availability","rating","num_reviews"],
             })
+            return item
+
+        # if we get here, it existed before — compute diffs
+        fields_to_compare = [
+            "name",
+            "price_incl_tax", "price_incl_tax_num",
+            "availability",
+            "rating",
+            "num_reviews",
+        ]
+        changed = {}
+        for f in fields_to_compare:
+            if prev.get(f) != item.get(f):
+                changed[f] = {"prev": prev.get(f), "new": item.get(f)}
+
+        if not changed:
+            return item
+
+        significant = any(k in changed for k in ["price_incl_tax", "price_incl_tax_num", "availability"])
+
+        price_delta = None
+        if "price_incl_tax_num" in changed:
+            try:
+                old = prev.get("price_incl_tax_num")
+                new = item.get("price_incl_tax_num")
+                if isinstance(old, (int, float)) and isinstance(new, (int, float)):
+                    price_delta = round(new - old, 2)
+            except Exception:
+                price_delta = None
+
+        self.changes.insert_one({
+            "url": item["url"],
+            "changed_at": datetime.utcnow(),
+            "change_kind": "update",
+            "significant": significant,
+            "fields_changed": changed,
+            "price_delta": price_delta,
+            "prev_hash": prev.get("content_hash"),
+            "new_hash": item["content_hash"],
+        })
 
         return item
