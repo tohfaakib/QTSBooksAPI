@@ -169,8 +169,6 @@ for i in $(seq 1 105); do
 done
 ```
 - Expect 200s first, then 429 once the limit is hit.
-- Expect 200s first, then 429 once the limit is hit.
-
 
 ### Endpoints
 - `GET /books` — query by category, rating, price range, search term.
