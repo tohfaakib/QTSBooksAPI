@@ -1,6 +1,6 @@
 services:
   mongo:
-    image: mongo:latest
+    image: mongo:6.0
     container_name: qtsbook-mongo
     ports:
       - "127.0.0.1:27017:27017"
