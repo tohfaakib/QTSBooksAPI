@@ -1,12 +1,11 @@
 services:
   mongo:
-    image: bitnami/mongodb:6.0
+    image: mongo:5.0
     container_name: qtsbook-mongo
-    platform: linux/arm64/v8
     ports:
       - "127.0.0.1:27017:27017"
     volumes:
-      - mongo_data:/bitnami/mongodb
+      - mongo_data:/data/db
     env_file: .env
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
