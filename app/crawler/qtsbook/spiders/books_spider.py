@@ -64,5 +64,6 @@ class BooksSpider(scrapy.Spider):
         item["raw_html"] = response.body
         item["crawled_at"] = datetime.now(timezone.utc)
 
+        print(item)
         yield item
 
