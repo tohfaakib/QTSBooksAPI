@@ -1,6 +1,6 @@
 services:
   mongo:
-    image: arm64v8/mongo:5.0
+    image: nonoroazoro/rpi-mongo:4.4
     container_name: qtsbook-mongo
     ports:
       - "127.0.0.1:27017:27017"
@@ -8,7 +8,7 @@ services:
       - mongo_data:/data/db
     env_file: .env
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
       interval: 10s
       timeout: 5s
       retries: 5
