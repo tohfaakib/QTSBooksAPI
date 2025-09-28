@@ -3,7 +3,7 @@ services:
     image: mongo:latest
     container_name: qtsbook-mongo
     ports:
-      - "27017:27017"
+      - "127.0.0.1:27017:27017"
     volumes:
       - mongo_data:/data/db
     env_file: .env
@@ -17,7 +17,7 @@ services:
     image: mongo-express:latest
     container_name: qtsbook-mongo-express
     ports:
-      - "8081:8081"
+      - "127.0.0.1:8081:8081"
     env_file: .env
     environment:
       ME_CONFIG_MONGODB_SERVER: ${ME_CONFIG_MONGODB_SERVER:-mongo}
@@ -39,7 +39,7 @@ services:
       mongo:
         condition: service_healthy
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     command: bash -lc "uvicorn app.api.main:app --host 0.0.0.0 --port 8000"
 
   scheduler:
