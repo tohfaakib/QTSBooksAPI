@@ -32,6 +32,35 @@ docker compose up -d --build
 
 ---
 
+## 🛠️ Docker Services
+
+The stack is fully containerized with **Docker Compose**. It includes four services:
+
+- **`mongo`** — MongoDB database with authentication enabled (root credentials from `.env`).  
+  - Persists data in `mongo_data` volume.  
+  - Health-checked with `db.adminCommand('ping')`.
+
+- **`mongo-express`** — Optional web UI for MongoDB.  
+  - Runs on [http://localhost:8081](http://localhost:8081).  
+  - Requires Basic Auth (`ME_CONFIG_BASICAUTH_USERNAME` / `ME_CONFIG_BASICAUTH_PASSWORD`).  
+  - Connects to MongoDB using the root credentials.
+
+- **`app`** — Main FastAPI application + Scrapy crawler.  
+  - Runs on [http://localhost:8000](http://localhost:8000).  
+  - Mounts local source code and reports directory.  
+  - Command: `uvicorn app.api.main:app`.
+
+- **`scheduler`** — APScheduler daily job runner.  
+  - Runs `python -m scheduler.schedule_daily`.  
+  - Same image as `app`, but executes scheduler instead of API server.
+
+**Volumes:**
+- `mongo_data` — stores MongoDB data files persistently.  
+- `./reports` — mounted inside the `app` container to persist daily reports.  
+- `./jobdata` — mounted for Scrapy’s JOBDIR state (resume crawls).
+
+---
+
 ## 🕷️ Crawling
 
 ### Dashboard controls
