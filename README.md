@@ -151,8 +151,26 @@ docker compose exec app bash -lc "python scheduler/schedule_daily.py"
 X-API-Key: <QTS_API_KEY>
 ```
 
-- Rate limit: **100 req/hour** per (API key, path).
-- Exceeding → `429 Too Many Requests`.
+- Rate limit: **100 req/hour** per (**API key**, **path**)
+- Exceeding → `429 Too Many Requests`
+- Replace placeholders before running:
+  - `HOST="http://example.com"`
+  - `API_KEY="your-api-key"`
+
+```bash
+HOST="http://example.com"
+API_KEY="your-api-key"
+
+for i in $(seq 1 105); do
+  code=$(curl -s -o /dev/null -w "%{http_code}" \
+    "$HOST/books?page=1&page_size=1" \
+    -H "X-API-Key: $API_KEY")
+  printf "%03d -> %s\n" "$i" "$code"
+done
+```
+- Expect 200s first, then 429 once the limit is hit.
+- Expect 200s first, then 429 once the limit is hit.
+
 
 ### Endpoints
 - `GET /books` — query by category, rating, price range, search term.
