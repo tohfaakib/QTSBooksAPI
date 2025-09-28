@@ -32,6 +32,13 @@ docker compose up -d --build
 
 ---
 
+## 🧩 Versions
+- **Python**: 3.13 (tested)
+- **MongoDB**: 6.x on x86_64 (official `mongo:6.0`)
+- **OS (tested)**: Linux Mint (x86_64), Mac Silicon (ARM64)
+- **Dependencies**: pinned in `requirements.txt`
+---
+
 ## 🛠️ Docker Services
 
 The stack is fully containerized with **Docker Compose**. It includes four services:
@@ -59,6 +66,18 @@ The stack is fully containerized with **Docker Compose**. It includes four servi
 - `./reports` — mounted inside the `app` container to persist daily reports.  
 - `./jobdata` — mounted for Scrapy’s JOBDIR state (resume crawls).
 
+---
+## 🧹 Project Cleanup after Testing
+
+Stop containers:
+```bash
+docker compose down
+```
+
+Remove everything (containers + volumes):
+```bash
+docker compose down -v
+```
 ---
 
 ## 🕷️ Crawling
