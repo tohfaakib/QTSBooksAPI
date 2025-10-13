@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
+from qtsbook.spiders.books_spider import BooksSpider
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRAPY_ROOT = REPO_ROOT / "app" / "crawler"
@@ -27,7 +28,7 @@ def main():
     os.environ.setdefault("QTS_MONGODB_URI", "mongodb://mongo:27017")
     os.environ.setdefault("QTS_MONGODB_DB", "qtsbook")
 
-    from qtsbook.spiders.books_spider import BooksSpider
+
     process = CrawlerProcess(settings)
     process.crawl(BooksSpider)
     process.start()
