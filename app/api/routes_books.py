@@ -1,7 +1,7 @@
 from __future__ import annotations
-
+from bson import ObjectId
 from typing import Optional, Literal
-from fastapi import APIRouter, Query, Depends
+from fastapi import APIRouter, Query, Depends, HTTPException
 from app.db.mongo import get_db
 from app.models.book import Book
 from app.api.deps import require_api_key
@@ -89,3 +89,16 @@ async def list_books(
         "next_page": page + 1 if page < total_pages else None,
         "items": items,
     }
+
+@router.get("/{book_id}", response_model=Book)
+async def get_book(book_id: str):
+    db = get_db()
+    try:
+        oid = ObjectId(book_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid book id")
+    doc = await db["books"].find_one({"_id": oid})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Not found")
+    doc["_id"] = str(doc["_id"])
+    return Book(**doc)
